@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 ####  It's sample test script just to try do simple measure
 #
@@ -59,6 +59,7 @@ mesure_current()
 
     # displays progress and eats output from loop to move progress (if yad fails -> exit_test)
     done  | yad --progress --center --width=300 --auto-close --title="Testing ..." 
+  
 
     # calculates RMS? from results in current.log
 	mean=$(cat /tmp/current.log | st -f "%.4f" -m)
@@ -94,9 +95,13 @@ run_test()
     # get serial number of device. stored in $sn
 	get_serial_num || return $MES_QUERY_FAILED
 
+    echo "start test"
+
     # set name of detailed test-specific log file. 
     # Name depends on device serial number 
     logfile=$logs_dir/idle_current_${sn}.log
+
+    
 
     # if log file absent - creates empty one
 	[ ! -f $logfile ] && touch $logfile
@@ -104,12 +109,16 @@ run_test()
     # log() - writing text to file prepared above
     log $"Idle MCU current - sample test"
 
+    echo "Init BK9201 and power on MCU"
+
     # check bk connection
     # set it to remote contrl mode
     # set power output off
     # set power output 6V 2A
     # wait ~12 seconds to reboot MCU
     bk_init    
+
+    echo "Wait till passing process ends..."
 
    #measure current 5 times with 1 sec pause
     for((i=0;i<10;i++)); do
@@ -119,10 +128,15 @@ run_test()
     # displays progress and eats output from loop to move progress (if yad fails -> exit_test)
     done  | yad --progress --center --width=300 --auto-close --title="Waiting to idle mode..."     
 
-    echo "Going measure..."
+    echo "Measure..."
 
     #measure urrent and put it to 
     test_res=$(mesure_current)
+
+    cat /tmp/current.log
+
+    echo "Test result $test_res"
+
 
     case "$test_res" in
     $RESULT_FAIL)
@@ -139,7 +153,7 @@ run_test()
     *)
         return 2; # something undefined
         ;;
-    esac    
+    esac        
 }
 
 # Now run test in loop and check test result
